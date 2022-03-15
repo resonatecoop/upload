@@ -1,0 +1,13 @@
+node_js:
+  - 'node'
+  - 'lts/*'
+dist: xenial
+language: node_js
+notifications:
+  email:
+    - auggod@resonate.is
+install:
+  - npm install
+script:
+  - npm run build
+  - npm run test

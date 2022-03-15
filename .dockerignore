@@ -1,0 +1,12 @@
+node_modules/
+lib/
+test/
+docs/
+Dockerfile
+LICENSE
+*.md
+README.md
+.git
+error.log
+Dockerfile
+.gitignore
