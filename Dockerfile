@@ -42,6 +42,6 @@ COPY --from=builder /var/www/api/lib ./lib
 
 RUN npm install --ignore-scripts=false sharp
 
-EXPOSE 3000
+EXPOSE 4000
 
 CMD ["npm", "start"]
