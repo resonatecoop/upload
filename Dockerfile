@@ -15,7 +15,7 @@ RUN npm install --unsafe-perm
 RUN npm run build
 
 FROM bethrezen/mozjpeg-docker AS mozjpeg
-FROM jrottenberg/ffmpeg:4.2-alpine as ffmpeg
+FROM jrottenberg/ffmpeg:5.0-alpine as ffmpeg
 FROM alpine:latest
 
 RUN apk add --update-cache --repository http://dl-3.alpinelinux.org/alpine/latest-stable/community \
