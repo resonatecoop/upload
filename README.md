@@ -53,6 +53,6 @@ npm test
 ## See also
 
 - [backblaze](http://backblaze.com)
-- [baclblaze-b2](https://github.com/yakovkhalinsky/backblaze-b2)
+- [backblaze-b2](https://github.com/yakovkhalinsky/backblaze-b2)
 - [bull](https://github.com/OptimalBits/bull) Queue system
 - [taskforce-connector](https://github.com/taskforcesh/taskforce-connector)
