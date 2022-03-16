@@ -30,7 +30,6 @@ COPY .env ./
 COPY .env.example ./
 COPY ./package* ./
 COPY ./index.js ./
-COPY ./server.js ./
 
 # copy ffmpeg bins
 COPY --from=ffmpeg / /
