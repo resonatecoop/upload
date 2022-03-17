@@ -15,12 +15,9 @@ import getAudioDuration from '../util/get-audio-duration'
 
 import { Track, File } from '../db/models'
 
-import convertAudioJob from '../jobs/convert-audio'
 import sendEmailJob from '../jobs/send-mail'
-import optimizeImageJob from '../jobs/convert-image'
 import uploadJob from '../jobs/upload-b2'
-import cleanupJob from '../jobs/cleanup'
-import sharpConfig from '../config/sharp'
+import sharpConfig from '../config/sharp' // TODO publish this
 
 import {
   REDIS_CONFIG
@@ -54,15 +51,30 @@ const queueOptions = {
 }
 
 const audioQueue = new Queue('convert-audio', queueOptions)
-const sendEmailQueue = new Queue('send-email', queueOptions)
 
-sendEmailQueue.on('completed', (job, result) => {
-  logger.info(`Email sent to ${job.data.message.to}`)
-})
-
-audioQueue.on('completed', async (job, result) => {
+audioQueue.on('global:completed', async (job, results) => {
   try {
+    const file = await File.findOne({
+      where: {
+        id: job.data.filename
+      }
+    })
+
+    const metadata = file.metadata || { variants: [] }
+    const variants = metadata.variants || []
+
+    for (const result of results) {
+      variants.push({
+        format: 'm4a',
+        size: result.size,
+        name: 'audiofile'
+      })
+    }
+
+    metadata.variants = variants
+
     await File.update({
+      // metadata: Object.assign(metadata, { streamable_file_size: result.size }),
       status: 'ok'
     }, {
       where: {
@@ -72,6 +84,12 @@ audioQueue.on('completed', async (job, result) => {
   } catch (err) {
     logger.error(err)
   }
+})
+
+const sendEmailQueue = new Queue('send-email', queueOptions)
+
+sendEmailQueue.on('completed', (job, result) => {
+  logger.info(`Email sent to ${job.data.message.to}`)
 })
 
 const uploadQueue = new Queue('upload', queueOptions)
@@ -95,11 +113,9 @@ uploadQueue.on('completed', async (job, result) => {
   }
 })
 
-const cleanupQueue = new Queue('cleanup', queueOptions)
-
 const imageQueue = new Queue('convert', queueOptions)
 
-imageQueue.on('completed', async (job, result) => {
+imageQueue.on('global:completed', async (job, result) => {
   try {
     await File.update({
       status: 'ok'
@@ -114,10 +130,7 @@ imageQueue.on('completed', async (job, result) => {
 })
 
 sendEmailQueue.process(sendEmailJob)
-audioQueue.process(convertAudioJob)
 uploadQueue.process(uploadJob)
-imageQueue.process(optimizeImageJob)
-cleanupQueue.process(cleanupJob)
 
 const user = new Roles()
 const router = new Router()
@@ -206,6 +219,7 @@ const processFile = ctx => {
 
       logger.info('Done parsing audio metadata')
 
+      // TODO parse audio duration later!
       let duration = metadata.format.duration
 
       if (!duration) {
