@@ -258,7 +258,7 @@ const processFile = ctx => {
     }
 
     if (isImage) {
-      const { config } = ctx.request.body // sharp config key
+      const { config = 'artwork' } = ctx.request.body // sharp config key
       const { width, height } = await dimensions(path.join(BASE_DATA_DIR, `/data/media/incoming/${filename}`))
 
       const file = await File.findOne({
