@@ -26,7 +26,6 @@
     "dotenv-safe": "^8.2.0",
     "email-templates": "^8.0.7",
     "file-type": "^14.1.4",
-    "fluent-ffmpeg": "^2.1.2",
     "image-size": "^0.8.3",
     "ioredis": "^4.14.1",
     "keygrip": "^1.1.0",

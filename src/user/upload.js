@@ -11,7 +11,6 @@ import winston from 'winston'
 import bytes from 'bytes'
 import dimensions from 'image-size'
 import * as mm from 'music-metadata'
-import getAudioDuration from '../util/get-audio-duration'
 
 import { Track, File } from '../db/models'
 
@@ -108,6 +107,30 @@ uploadQueue.on('completed', async (job, result) => {
         firstName: profile.first_name
       }
     })
+  } catch (err) {
+    logger.error(err)
+  }
+})
+
+const audioDurationQueue = new Queue('audio-duration', queueOptions)
+
+audioDurationQueue.on('global:completed', async (job, result) => {
+  try {
+    const file = await File.findOne({
+      where: {
+        id: job.data.filename
+      }
+    })
+
+    const track = await Track.findOne({
+      where: {
+        url: file.id
+      }
+    })
+
+    track.duration = result
+
+    await track.save()
   } catch (err) {
     logger.error(err)
   }
@@ -219,21 +242,6 @@ const processFile = ctx => {
 
       logger.info('Done parsing audio metadata')
 
-      // TODO parse audio duration later!
-      let duration = metadata.format.duration
-
-      if (!duration) {
-        // fallback for file with no headers?
-        // see: https://github.com/Borewit/music-metadata/issues/543
-        // https://github.com/Borewit/music-metadata/pull/584 partially addressed?
-        logger.info('Failed to get duration using `music-metadata`. Fallback to `ffmpeg.ffprobe` ...')
-        duration = await getAudioDuration(path.join(BASE_DATA_DIR, `/data/media/incoming/${filename}`))
-
-        if (!duration) {
-          logger.info('Failed to get duration')
-        }
-      }
-
       logger.info('Creating new track')
 
       const track = await Track.create({
@@ -242,12 +250,17 @@ const processFile = ctx => {
         url: filename,
         artist: metadata.common.artist,
         album: metadata.common.album,
-        duration: duration,
         year: metadata.common.year,
         album_artist: metadata.common.albumartist,
         number: metadata.common.track.no,
         createdAt: new Date().getTime() / 1000 | 0
       })
+
+      if (metadata.format.duration) {
+        track.duration = metadata.format.duration
+      } else {
+        audioDurationQueue.add({ filename })
+      }
 
       data.metadata = metadata.common
       data.track = track.get({ plain: true })
