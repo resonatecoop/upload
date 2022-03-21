@@ -9,7 +9,7 @@
   "scripts": {
     "build": "babel src -d lib",
     "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 DEBUG=koa-mount babel-node -r ./node_modules/dotenv-safe/config ./src/server.js",
-    "start": "node ./lib/server.js",
+    "start": "node -r ./node_modules/dotenv-safe/config ./lib/server.js",
     "run-all-tests": "npm-run-all test:*",
     "test": "npm run test:lint src && npm run test:deps",
     "test:lint": "standard src",
