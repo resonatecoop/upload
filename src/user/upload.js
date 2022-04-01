@@ -51,8 +51,12 @@ const queueOptions = {
 
 const audioQueue = new Queue('convert-audio', queueOptions)
 
-audioQueue.on('global:completed', async (job, results) => {
+audioQueue.on('global:completed', async (jobId) => {
+  console.log(`Job with id ${jobId} has been completed`)
+
   try {
+    const job = await audioQueue.getJob(jobId)
+
     const file = await File.findOne({
       where: {
         id: job.data.filename
@@ -62,7 +66,7 @@ audioQueue.on('global:completed', async (job, results) => {
     const metadata = file.metadata || { variants: [] }
     const variants = metadata.variants || []
 
-    for (const result of results) {
+    for (const result of job.returnvalue) {
       variants.push({
         format: 'm4a',
         size: result.size,
@@ -73,7 +77,7 @@ audioQueue.on('global:completed', async (job, results) => {
     metadata.variants = variants
 
     await File.update({
-      // metadata: Object.assign(metadata, { streamable_file_size: result.size }),
+      metadata: metadata,
       status: 'ok'
     }, {
       where: {
@@ -114,8 +118,10 @@ uploadQueue.on('completed', async (job, result) => {
 
 const audioDurationQueue = new Queue('audio-duration', queueOptions)
 
-audioDurationQueue.on('global:completed', async (job, result) => {
+audioDurationQueue.on('global:completed', async (jobId) => {
   try {
+    const job = await audioDurationQueue.getJob(jobId)
+
     const file = await File.findOne({
       where: {
         id: job.data.filename
@@ -128,7 +134,7 @@ audioDurationQueue.on('global:completed', async (job, result) => {
       }
     })
 
-    track.duration = result
+    track.duration = job.returnvalue
 
     await track.save()
   } catch (err) {
@@ -138,8 +144,12 @@ audioDurationQueue.on('global:completed', async (job, result) => {
 
 const imageQueue = new Queue('convert', queueOptions)
 
-imageQueue.on('global:completed', async (job, result) => {
+imageQueue.on('global:completed', async (jobId) => {
+  console.log(`Job with id ${jobId} has been completed`)
+
   try {
+    const job = await imageQueue.getJob(jobId)
+
     await File.update({
       status: 'ok'
     }, {
