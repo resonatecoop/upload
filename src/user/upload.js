@@ -258,6 +258,7 @@ const processFile = ctx => {
         title: metadata.common.title || originalFilename,
         creator_id: ctx.profile.id,
         url: filename,
+        duration: metadata.format.duration,
         artist: metadata.common.artist,
         album: metadata.common.album,
         year: metadata.common.year,
@@ -266,9 +267,7 @@ const processFile = ctx => {
         createdAt: new Date().getTime() / 1000 | 0
       })
 
-      if (metadata.format.duration) {
-        track.duration = metadata.format.duration
-      } else {
+      if (!metadata.format.duration) {
         audioDurationQueue.add({ filename })
       }
 
