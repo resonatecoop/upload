@@ -258,7 +258,7 @@ const processFile = ctx => {
         title: metadata.common.title || originalFilename,
         creator_id: ctx.profile.id,
         url: filename,
-        duration: metadata.format.duration,
+        duration: metadata.format.duration || 0,
         artist: metadata.common.artist,
         album: metadata.common.album,
         year: metadata.common.year,
