@@ -15,7 +15,6 @@ import * as mm from 'music-metadata'
 import { Track, File } from '../db/models'
 
 import sendEmailJob from '../jobs/send-mail'
-import uploadJob from '../jobs/upload-b2'
 import sharpConfig from '../config/sharp' // TODO publish this
 
 import {
@@ -95,27 +94,6 @@ sendEmailQueue.on('completed', (job, result) => {
   logger.info(`Email sent to ${job.data.message.to}`)
 })
 
-const uploadQueue = new Queue('upload', queueOptions)
-
-uploadQueue.on('completed', async (job, result) => {
-  const { profile } = job.data
-
-  try {
-    sendEmailQueue.add({
-      template: 'new-upload',
-      message: {
-        to: process.env.APP_EMAIL
-      },
-      locals: {
-        name: profile.nickname,
-        firstName: profile.first_name
-      }
-    })
-  } catch (err) {
-    logger.error(err)
-  }
-})
-
 const audioDurationQueue = new Queue('audio-duration', queueOptions)
 
 audioDurationQueue.on('global:completed', async (jobId) => {
@@ -163,7 +141,6 @@ imageQueue.on('global:completed', async (jobId) => {
 })
 
 sendEmailQueue.process(sendEmailJob)
-uploadQueue.process(uploadJob)
 
 const user = new Roles()
 const router = new Router()
@@ -227,15 +204,6 @@ const processFile = ctx => {
       file.path,
       path.join(BASE_DATA_DIR, `/data/media/incoming/${filename}`)
     )
-
-    if (process.env.NODE_ENV !== 'development') {
-      uploadQueue.add({
-        profile: ctx.profile,
-        filename,
-        filesize: fileSize,
-        mime
-      })
-    }
 
     const data = Object.assign({}, result.dataValues, {
       filename, // uuid filename
